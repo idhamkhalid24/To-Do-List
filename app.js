@@ -803,8 +803,21 @@ if (window.Android && window.Android.getFcmToken) {
         document.getElementById('pomodoro-modal').style.display = 'none';
     }
     
+    function showPomodoroDoneModal() {
+        document.getElementById('pomodoro-done-backdrop').style.display = 'block';
+        document.getElementById('pomodoro-done-modal').style.display = 'block';
+    }
+
+    function closePomodoroDoneModal() {
+        document.getElementById('pomodoro-done-backdrop').style.display = 'none';
+        document.getElementById('pomodoro-done-modal').style.display = 'none';
+    }
+
     document.getElementById('pomodoro-cancel-btn').addEventListener('click', closePomodoroModal);
     document.getElementById('pomodoro-modal-backdrop').addEventListener('click', closePomodoroModal);
+    
+    document.getElementById('pomodoro-done-btn').addEventListener('click', closePomodoroDoneModal);
+    document.getElementById('pomodoro-done-backdrop').addEventListener('click', closePomodoroDoneModal);
     
     document.getElementById('pomodoro-start-btn').addEventListener('click', () => {
         const inputMins = document.getElementById('pomodoro-mins-input').value || 0;
@@ -876,7 +889,7 @@ if (window.Android && window.Android.getFcmToken) {
                     if (window.Android && window.Android.playPomodoroSound) {
                         window.Android.playPomodoroSound();
                     }
-                    alert(`Selamat! Waktu fokus selesai! Waktunya istirahat.`);
+                    showPomodoroDoneModal();
                 }
             } else {
                 const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
