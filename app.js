@@ -1,4 +1,4 @@
-// FCM Token Retrieval (Global)
+11// FCM Token Retrieval (Global)
 let currentFcmToken = null;
 window.terimaTokenFCM = function(token) {
     currentFcmToken = token;
