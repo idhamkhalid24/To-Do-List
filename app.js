@@ -786,11 +786,12 @@ if (window.Android && window.Android.getFcmToken) {
                 window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
             }
             
+            const endTime = Date.now() + (minutes * 60 * 1000);
+            
             activePomodoros[taskId] = setInterval(() => {
-                timeLeft--;
-                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                const s = (timeLeft % 60).toString().padStart(2, '0');
-                display.innerText = `${m}:${s}`;
+                const now = Date.now();
+                timeLeft = Math.round((endTime - now) / 1000);
+                
                 if (timeLeft <= 0) {
                     clearInterval(activePomodoros[taskId]);
                     delete activePomodoros[taskId];
@@ -798,12 +799,19 @@ if (window.Android && window.Android.getFcmToken) {
                     display.innerText = "Selesai!";
                     triggerConfetti();
                     
-                    // Mainkan suara via Android
-                    if (window.Android && window.Android.playPomodoroSound) {
-                        window.Android.playPomodoroSound();
+                    // Mainkan suara via Android HANYA jika waktu selesainya belum lewat jauh (maksimal 5 detik lewat)
+                    // Jika lebih dari 5 detik, berarti alarm background sudah bunyi saat aplikasi ditutup
+                    if (now - endTime < 5000) {
+                        if (window.Android && window.Android.playPomodoroSound) {
+                            window.Android.playPomodoroSound();
+                        }
                     }
                     
                     alert(`Selamat! Waktu fokus ${minutes} menit selesai! Waktunya istirahat.`);
+                } else {
+                    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                    const s = (timeLeft % 60).toString().padStart(2, '0');
+                    display.innerText = `${m}:${s}`;
                 }
             }, 1000);
         }
