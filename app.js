@@ -807,9 +807,13 @@ if (window.Android && window.Android.getFcmToken) {
     document.getElementById('pomodoro-modal-backdrop').addEventListener('click', closePomodoroModal);
     
     document.getElementById('pomodoro-start-btn').addEventListener('click', () => {
-        const inputMins = document.getElementById('pomodoro-mins-input').value;
-        if (!inputMins || isNaN(inputMins) || inputMins <= 0) return;
+        const inputMins = document.getElementById('pomodoro-mins-input').value || 0;
+        const inputSecs = document.getElementById('pomodoro-secs-input').value || 0;
         const minutes = parseInt(inputMins, 10);
+        const seconds = parseInt(inputSecs, 10);
+        const totalSeconds = (minutes * 60) + seconds;
+        if (totalSeconds <= 0) return;
+        
         closePomodoroModal();
         
         const taskId = currentPomodoroTask;
@@ -817,7 +821,7 @@ if (window.Android && window.Android.getFcmToken) {
         const display = document.getElementById(`pomodoro-display-${taskId}`);
         
         btnElement.classList.add('active');
-        let timeLeft = minutes * 60;
+        let timeLeft = totalSeconds;
         
         // Tampilkan waktu awalnya langsung
         const initialM = Math.floor(timeLeft / 60).toString().padStart(2, '0');
@@ -836,18 +840,18 @@ if (window.Android && window.Android.getFcmToken) {
         }
         
         if (window.Android && window.Android.schedulePomodoroAlarm) {
-            window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
+            window.Android.schedulePomodoroAlarm(totalSeconds, taskId, taskTitle);
         }
         
-        startPomodoroInterval(taskId, btnElement, minutes);
+        startPomodoroInterval(taskId, btnElement, totalSeconds);
     });
-    function startPomodoroInterval(taskId, btnElement, minutes, savedEndTime = null) {
+    function startPomodoroInterval(taskId, btnElement, totalSeconds, savedEndTime = null) {
         const display = document.getElementById(`pomodoro-display-${taskId}`);
-        const endTime = savedEndTime ? savedEndTime : Date.now() + (minutes * 60 * 1000);
+        const endTime = savedEndTime ? savedEndTime : Date.now() + (totalSeconds * 1000);
         
         if (!savedEndTime) {
             localStorage.setItem(`pomodoro_end_${taskId}`, endTime.toString());
-            localStorage.setItem(`pomodoro_mins_${taskId}`, minutes.toString());
+            localStorage.setItem(`pomodoro_mins_${taskId}`, totalSeconds.toString());
         }
         
         btnElement.classList.add('active');

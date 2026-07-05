@@ -219,10 +219,12 @@
     <div class="pomodoro-modal-backdrop" id="pomodoro-modal-backdrop"></div>
     <div class="pomodoro-modal" id="pomodoro-modal">
         <h3><i class="fas fa-stopwatch" style="color:var(--primary); margin-right:8px;"></i> Mulai Fokus</h3>
-        <p>Berapa menit kamu ingin fokus pada tugas ini?</p>
-        <div class="pomodoro-mins-wrapper">
-            <input type="number" id="pomodoro-mins-input" value="25" min="1" max="120">
+        <p>Berapa lama kamu ingin fokus pada tugas ini?</p>
+        <div class="pomodoro-mins-wrapper" style="display:flex; align-items:center; gap:8px;">
+            <input type="number" id="pomodoro-mins-input" value="25" min="0" max="120" style="width:60px;">
             <span>Menit</span>
+            <input type="number" id="pomodoro-secs-input" value="0" min="0" max="59" style="width:60px;">
+            <span>Detik</span>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px;">
             <button id="pomodoro-cancel-btn" class="btn-cancel">Batal</button>
