@@ -1,3 +1,13 @@
+// FCM Token Retrieval (Global)
+let currentFcmToken = null;
+window.terimaTokenFCM = function(token) {
+    currentFcmToken = token;
+    console.log("FCM Token retrieved:", token);
+};
+if (window.Android && window.Android.getFcmToken) {
+    window.Android.getFcmToken("terimaTokenFCM");
+}
+
     // ============================================================
     // Supabase
     // ============================================================
@@ -857,16 +867,6 @@
     // Boot
     // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
-        // FCM Token Retrieval
-        let currentFcmToken = null;
-        window.terimaTokenFCM = function(token) {
-            currentFcmToken = token;
-            console.log("FCM Token retrieved:", token);
-        };
-        if (window.Android && window.Android.getFcmToken) {
-            window.Android.getFcmToken("terimaTokenFCM");
-        }
-
         // Apply saved theme
         const savedTheme = localStorage.getItem('todo_theme');
         if (savedTheme) changeTheme(savedTheme);
