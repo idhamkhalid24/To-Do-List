@@ -799,8 +799,16 @@ if (window.Android && window.Android.getFcmToken) {
             display.innerText = `${initialM}:${initialS}`;
             
             // Daftarkan alarm ke background Android
-            const taskObj = tasks.find(t => String(t.id) === String(taskId));
-            const taskTitle = taskObj ? taskObj.title : "Tugas Fokus";
+            let taskTitle = "Tugas Fokus";
+            if (String(taskId).startsWith('habit-')) {
+                const hId = String(taskId).replace('habit-', '');
+                const habitObj = habits.find(h => String(h.id) === hId);
+                if (habitObj) taskTitle = habitObj.name;
+            } else {
+                const taskObj = tasks.find(t => String(t.id) === String(taskId));
+                if (taskObj) taskTitle = taskObj.title;
+            }
+            
             if (window.Android && window.Android.schedulePomodoroAlarm) {
                 window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
             }
@@ -908,27 +916,95 @@ if (window.Android && window.Android.getFcmToken) {
         }
         habits.forEach(h => {
             const li = document.createElement('li');
-            li.className = `habit-item${h.completed ? ' completed' : ''}`;
-            li.innerHTML = `
-                <input type="checkbox" class="task-checkbox" ${h.completed ? 'checked' : ''}>
-                <div style="flex:1; font-weight:600; font-size:var(--font-sm); ${h.completed ? 'text-decoration:line-through' : ''}">${h.name}</div>
-                <button class="task-btn text-danger" onclick="deleteHabit('${h.id}')" style="color:#e63946;"><i class="fas fa-trash"></i></button>
+            
+            // Container form check
+            const checkLabel = document.createElement('label');
+            checkLabel.className = 'custom-checkbox';
+            checkLabel.innerHTML = `
+                <input type="checkbox" ${h.completed ? 'checked' : ''} onchange="toggleHabit('${h.id}')">
+                <span class="checkmark"></span>
+                <span class="task-title ${h.completed ? 'completed' : ''}">${h.name}</span>
             `;
-            const cb = li.querySelector('input');
-            cb.onchange = () => {
-                h.completed = cb.checked;
-                saveHabits();
-                renderHabits();
-                if(h.completed) triggerConfetti();
-            };
+            
+            // Menampilkan jam rutinitas jika ada
+            if (h.time) {
+                const timeSpan = document.createElement('span');
+                timeSpan.style.display = 'block';
+                timeSpan.style.fontSize = '0.75rem';
+                timeSpan.style.color = 'var(--text-color)';
+                timeSpan.style.opacity = '0.7';
+                timeSpan.style.marginLeft = '30px';
+                timeSpan.innerHTML = `⏰ ${h.time}`;
+                checkLabel.appendChild(timeSpan);
+            }
+            
+            li.appendChild(checkLabel);
+            
+            // Container tombol aksi
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'task-actions';
+            
+            // Tombol Pomodoro
+            const btnPomodoro = document.createElement('button');
+            btnPomodoro.className = 'icon-btn pomodoro-btn';
+            btnPomodoro.innerHTML = '<i class="fas fa-stopwatch"></i>';
+            btnPomodoro.onclick = function() { togglePomodoro('habit-' + h.id, this); };
+            actionsDiv.appendChild(btnPomodoro);
+            
+            // Teks timer (tersembunyi secara default, ditampilkan saat aktif)
+            const displaySpan = document.createElement('span');
+            displaySpan.id = `pomodoro-display-habit-${h.id}`;
+            displaySpan.style.fontSize = '0.8rem';
+            displaySpan.style.marginRight = '8px';
+            displaySpan.style.fontWeight = 'bold';
+            displaySpan.innerText = '00:00';
+            actionsDiv.appendChild(displaySpan);
+            
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'icon-btn';
+            btnDelete.innerHTML = '<i class="fas fa-trash"></i>';
+            btnDelete.style.color = '#ff6b6b';
+            btnDelete.onclick = () => deleteHabit(h.id);
+            actionsDiv.appendChild(btnDelete);
+            
+            li.appendChild(actionsDiv);
             list.appendChild(li);
+            
+            // Restore active pomodoro state for habit if any
+            const savedEndTime = localStorage.getItem(`pomodoro_end_habit-${h.id}`);
+            const savedMins = localStorage.getItem(`pomodoro_mins_habit-${h.id}`);
+            if (savedEndTime) {
+                const now = Date.now();
+                const endTime = parseInt(savedEndTime, 10);
+                if (endTime > now) {
+                    setTimeout(() => {
+                        startPomodoroInterval('habit-' + h.id, btnPomodoro, parseInt(savedMins, 10) || 25, endTime);
+                    }, 100);
+                } else {
+                    localStorage.removeItem(`pomodoro_end_habit-${h.id}`);
+                    localStorage.removeItem(`pomodoro_mins_habit-${h.id}`);
+                }
+            }
         });
     }
+
+    window.toggleHabit = function(id) {
+        const habit = habits.find(h => h.id === id);
+        if (habit) {
+            habit.completed = !habit.completed;
+            saveHabits();
+            renderHabits();
+            if (habit.completed) triggerConfetti();
+        }
+    };
 
     window.deleteHabit = function(id) {
         habits = habits.filter(h => h.id !== id);
         saveHabits();
         renderHabits();
+        if (window.Android && window.Android.cancelHabitAlarm) {
+            window.Android.cancelHabitAlarm(id);
+        }
     };
 
 
@@ -952,12 +1028,23 @@ if (window.Android && window.Android.getFcmToken) {
         document.getElementById('add-habit-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const input = document.getElementById('new-habit-input');
+            const timeInput = document.getElementById('new-habit-time');
             const name = input.value.trim();
+            const time = timeInput.value;
+            
             if(name) {
-                habits.push({ id: Date.now().toString(), name, completed: false });
+                const habitId = Date.now().toString();
+                habits.push({ id: habitId, name, completed: false, time: time });
                 saveHabits();
                 input.value = '';
+                timeInput.value = '';
                 renderHabits();
+                
+                // Daftarkan alarm jika ada waktunya
+                if (time && window.Android && window.Android.scheduleHabitAlarm) {
+                    const [hour, minute] = time.split(':').map(Number);
+                    window.Android.scheduleHabitAlarm(hour, minute, habitId, name);
+                }
             }
         });
 
