@@ -519,7 +519,10 @@
             deadline,
             completed: false,
             createdAt: new Date().toISOString(),
-            revisions: []
+            revisions: [],
+            fcm_token: currentFcmToken,
+            schedule_time: deadline ? new Date(deadline).toISOString() : null,
+            status: 'pending'
         };
 
         await putTask(newTask);
@@ -854,6 +857,16 @@
     // Boot
     // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
+        // FCM Token Retrieval
+        let currentFcmToken = null;
+        window.terimaTokenFCM = function(token) {
+            currentFcmToken = token;
+            console.log("FCM Token retrieved:", token);
+        };
+        if (window.Android && window.Android.getFcmToken) {
+            window.Android.getFcmToken("terimaTokenFCM");
+        }
+
         // Apply saved theme
         const savedTheme = localStorage.getItem('todo_theme');
         if (savedTheme) changeTheme(savedTheme);
