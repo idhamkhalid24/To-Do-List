@@ -759,11 +759,21 @@ if (window.Android && window.Android.getFcmToken) {
             clearInterval(activePomodoros[taskId]);
             delete activePomodoros[taskId];
             btnElement.classList.remove('active');
-            display.innerText = "25:00";
+            display.innerText = "00:00";
         } else {
             // Start
+            const inputMins = prompt("Berapa menit kamu ingin fokus pada tugas ini?", "25");
+            if (!inputMins || isNaN(inputMins)) return;
+            const minutes = parseInt(inputMins, 10);
+            
             btnElement.classList.add('active');
-            let timeLeft = 25 * 60; // 25 mins
+            let timeLeft = minutes * 60;
+            
+            // Tampilkan waktu awalnya langsung
+            const initialM = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const initialS = (timeLeft % 60).toString().padStart(2, '0');
+            display.innerText = `${initialM}:${initialS}`;
+            
             activePomodoros[taskId] = setInterval(() => {
                 timeLeft--;
                 const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
@@ -775,7 +785,13 @@ if (window.Android && window.Android.getFcmToken) {
                     btnElement.classList.remove('active');
                     display.innerText = "Selesai!";
                     triggerConfetti();
-                    alert("Waktu Pomodoro selesai! Waktunya istirahat 5 menit.");
+                    
+                    // Mainkan suara via Android
+                    if (window.Android && window.Android.playPomodoroSound) {
+                        window.Android.playPomodoroSound();
+                    }
+                    
+                    alert(`Selamat! Waktu fokus ${minutes} menit selesai! Waktunya istirahat.`);
                 }
             }, 1000);
         }
