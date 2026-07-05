@@ -819,34 +819,35 @@ if (window.Android && window.Android.getFcmToken) {
         }
         
         btnElement.classList.add('active');
-                const now = Date.now();
-                timeLeft = Math.round((endTime - now) / 1000);
+        
+        activePomodoros[taskId] = setInterval(() => {
+            const now = Date.now();
+            let timeLeft = Math.round((endTime - now) / 1000);
+            
+            if (timeLeft <= 0) {
+                clearInterval(activePomodoros[taskId]);
+                delete activePomodoros[taskId];
+                localStorage.removeItem(`pomodoro_end_${taskId}`);
+                localStorage.removeItem(`pomodoro_mins_${taskId}`);
                 
-                if (timeLeft <= 0) {
-                    clearInterval(activePomodoros[taskId]);
-                    delete activePomodoros[taskId];
-                    localStorage.removeItem(`pomodoro_end_${taskId}`);
-                    localStorage.removeItem(`pomodoro_mins_${taskId}`);
-                    
-                    btnElement.classList.remove('active');
-                    display.innerText = "Selesai!";
-                    triggerConfetti();
-                    
-                    // Mainkan suara via Android HANYA jika waktu selesainya belum lewat jauh (maksimal 5 detik lewat)
-                    // Jika lebih dari 5 detik, berarti alarm background sudah bunyi saat aplikasi ditutup
-                    if (now - endTime < 5000) {
-                        if (window.Android && window.Android.playPomodoroSound) {
-                            window.Android.playPomodoroSound();
-                        }
-                        alert(`Selamat! Waktu fokus selesai! Waktunya istirahat.`);
+                btnElement.classList.remove('active');
+                display.innerText = "Selesai!";
+                triggerConfetti();
+                
+                // Mainkan suara via Android HANYA jika waktu selesainya belum lewat jauh (maksimal 5 detik lewat)
+                // Jika lebih dari 5 detik, berarti alarm background sudah bunyi saat aplikasi ditutup
+                if (now - endTime < 5000) {
+                    if (window.Android && window.Android.playPomodoroSound) {
+                        window.Android.playPomodoroSound();
                     }
-                } else {
-                    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                    const s = (timeLeft % 60).toString().padStart(2, '0');
-                    display.innerText = `${m}:${s}`;
+                    alert(`Selamat! Waktu fokus selesai! Waktunya istirahat.`);
                 }
-            }, 1000);
-        }
+            } else {
+                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const s = (timeLeft % 60).toString().padStart(2, '0');
+                display.innerText = `${m}:${s}`;
+            }
+        }, 1000);
     }
 
     // Stats & Badges
