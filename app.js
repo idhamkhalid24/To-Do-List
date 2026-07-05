@@ -350,13 +350,29 @@ if (window.Android && window.Android.getFcmToken) {
                 </div>
                 <span class="task-priority priority-${task.priority || 'medium'}">${t(task.priority || 'medium')}</span>
                 ${task.category ? `<span class="task-priority" style="background-color:var(--secondary);">${task.category}</span>` : ''}
-            </div>
             <div class="task-details">
                 <div class="task-details-content">
                     ${renderRevisions(task.revisions)}
                 </div>
             </div>`;
         taskList.appendChild(li);
+
+        // Restore active timer state if any
+        const savedEndTime = localStorage.getItem(`pomodoro_end_${task.id}`);
+        const savedMins = localStorage.getItem(`pomodoro_mins_${task.id}`);
+        if (savedEndTime) {
+            const now = Date.now();
+            const endTime = parseInt(savedEndTime, 10);
+            if (endTime > now) {
+                const btn = li.querySelector('.pomodoro-btn');
+                setTimeout(() => {
+                    startPomodoroInterval(task.id, btn, parseInt(savedMins, 10) || 25, endTime);
+                }, 100);
+            } else {
+                localStorage.removeItem(`pomodoro_end_${task.id}`);
+                localStorage.removeItem(`pomodoro_mins_${task.id}`);
+            }
+        }
     }
 
     function renderTasks() {
@@ -758,6 +774,9 @@ if (window.Android && window.Android.getFcmToken) {
             // Stop
             clearInterval(activePomodoros[taskId]);
             delete activePomodoros[taskId];
+            localStorage.removeItem(`pomodoro_end_${taskId}`);
+            localStorage.removeItem(`pomodoro_mins_${taskId}`);
+            
             btnElement.classList.remove('active');
             display.innerText = "00:00";
             
@@ -786,15 +805,29 @@ if (window.Android && window.Android.getFcmToken) {
                 window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
             }
             
-            const endTime = Date.now() + (minutes * 60 * 1000);
-            
-            activePomodoros[taskId] = setInterval(() => {
+            startPomodoroInterval(taskId, btnElement, minutes);
+        }
+    }
+    
+    function startPomodoroInterval(taskId, btnElement, minutes, savedEndTime = null) {
+        const display = document.getElementById(`pomodoro-display-${taskId}`);
+        const endTime = savedEndTime ? savedEndTime : Date.now() + (minutes * 60 * 1000);
+        
+        if (!savedEndTime) {
+            localStorage.setItem(`pomodoro_end_${taskId}`, endTime.toString());
+            localStorage.setItem(`pomodoro_mins_${taskId}`, minutes.toString());
+        }
+        
+        btnElement.classList.add('active');
                 const now = Date.now();
                 timeLeft = Math.round((endTime - now) / 1000);
                 
                 if (timeLeft <= 0) {
                     clearInterval(activePomodoros[taskId]);
                     delete activePomodoros[taskId];
+                    localStorage.removeItem(`pomodoro_end_${taskId}`);
+                    localStorage.removeItem(`pomodoro_mins_${taskId}`);
+                    
                     btnElement.classList.remove('active');
                     display.innerText = "Selesai!";
                     triggerConfetti();
@@ -805,9 +838,8 @@ if (window.Android && window.Android.getFcmToken) {
                         if (window.Android && window.Android.playPomodoroSound) {
                             window.Android.playPomodoroSound();
                         }
+                        alert(`Selamat! Waktu fokus selesai! Waktunya istirahat.`);
                     }
-                    
-                    alert(`Selamat! Waktu fokus ${minutes} menit selesai! Waktunya istirahat.`);
                 } else {
                     const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
                     const s = (timeLeft % 60).toString().padStart(2, '0');
