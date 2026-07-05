@@ -785,38 +785,62 @@ if (window.Android && window.Android.getFcmToken) {
                 window.Android.cancelPomodoroAlarm(taskId);
             }
         } else {
-            // Start
-            const inputMins = prompt("Berapa menit kamu ingin fokus pada tugas ini?", "25");
-            if (!inputMins || isNaN(inputMins)) return;
-            const minutes = parseInt(inputMins, 10);
-            
-            btnElement.classList.add('active');
-            let timeLeft = minutes * 60;
-            
-            // Tampilkan waktu awalnya langsung
-            const initialM = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const initialS = (timeLeft % 60).toString().padStart(2, '0');
-            display.innerText = `${initialM}:${initialS}`;
-            
-            // Daftarkan alarm ke background Android
-            let taskTitle = "Tugas Fokus";
-            if (String(taskId).startsWith('habit-')) {
-                const hId = String(taskId).replace('habit-', '');
-                const habitObj = habits.find(h => String(h.id) === hId);
-                if (habitObj) taskTitle = habitObj.name;
-            } else {
-                const taskObj = tasks.find(t => String(t.id) === String(taskId));
-                if (taskObj) taskTitle = taskObj.title;
-            }
-            
-            if (window.Android && window.Android.schedulePomodoroAlarm) {
-                window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
-            }
-            
-            startPomodoroInterval(taskId, btnElement, minutes);
+            // Tampilkan modal khusus alih-alih prompt bawaan
+            currentPomodoroTask = taskId;
+            currentPomodoroBtn = btnElement;
+            document.getElementById('pomodoro-modal-backdrop').style.display = 'block';
+            document.getElementById('pomodoro-modal').style.display = 'block';
+            document.getElementById('pomodoro-mins-input').focus();
         }
     }
     
+    // Global referensi untuk modal
+    let currentPomodoroTask = null;
+    let currentPomodoroBtn = null;
+    
+    function closePomodoroModal() {
+        document.getElementById('pomodoro-modal-backdrop').style.display = 'none';
+        document.getElementById('pomodoro-modal').style.display = 'none';
+    }
+    
+    document.getElementById('pomodoro-cancel-btn').addEventListener('click', closePomodoroModal);
+    document.getElementById('pomodoro-modal-backdrop').addEventListener('click', closePomodoroModal);
+    
+    document.getElementById('pomodoro-start-btn').addEventListener('click', () => {
+        const inputMins = document.getElementById('pomodoro-mins-input').value;
+        if (!inputMins || isNaN(inputMins) || inputMins <= 0) return;
+        const minutes = parseInt(inputMins, 10);
+        closePomodoroModal();
+        
+        const taskId = currentPomodoroTask;
+        const btnElement = currentPomodoroBtn;
+        const display = document.getElementById(`pomodoro-display-${taskId}`);
+        
+        btnElement.classList.add('active');
+        let timeLeft = minutes * 60;
+        
+        // Tampilkan waktu awalnya langsung
+        const initialM = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const initialS = (timeLeft % 60).toString().padStart(2, '0');
+        display.innerText = `${initialM}:${initialS}`;
+        
+        // Daftarkan alarm ke background Android
+        let taskTitle = "Tugas Fokus";
+        if (String(taskId).startsWith('habit-')) {
+            const hId = String(taskId).replace('habit-', '');
+            const habitObj = habits.find(h => String(h.id) === hId);
+            if (habitObj) taskTitle = habitObj.name;
+        } else {
+            const taskObj = tasks.find(t => String(t.id) === String(taskId));
+            if (taskObj) taskTitle = taskObj.title;
+        }
+        
+        if (window.Android && window.Android.schedulePomodoroAlarm) {
+            window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
+        }
+        
+        startPomodoroInterval(taskId, btnElement, minutes);
+    });
     function startPomodoroInterval(taskId, btnElement, minutes, savedEndTime = null) {
         const display = document.getElementById(`pomodoro-display-${taskId}`);
         const endTime = savedEndTime ? savedEndTime : Date.now() + (minutes * 60 * 1000);
