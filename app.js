@@ -916,59 +916,37 @@ if (window.Android && window.Android.getFcmToken) {
         }
         habits.forEach(h => {
             const li = document.createElement('li');
+            li.className = `task-item ${h.completed ? 'completed' : ''}`;
             
-            // Container form check
-            const checkLabel = document.createElement('label');
-            checkLabel.className = 'custom-checkbox';
-            checkLabel.innerHTML = `
-                <input type="checkbox" ${h.completed ? 'checked' : ''} onchange="toggleHabit('${h.id}')">
-                <span class="checkmark"></span>
-                <span class="task-title ${h.completed ? 'completed' : ''}">${h.name}</span>
+            li.innerHTML = `
+                <div class="task-header">
+                    <input type="checkbox" class="task-checkbox" ${h.completed ? 'checked' : ''} onchange="toggleHabit('${h.id}')">
+                    <div class="task-title${h.completed ? ' completed' : ''}">${h.name}</div>
+                    <div class="task-actions">
+                        <button class="pomodoro-btn" onclick="togglePomodoro('habit-${h.id}', this)" title="Mulai Fokus (Pomodoro)"><i class="fas fa-stopwatch"></i></button>
+                        <span class="pomodoro-timer-display" id="pomodoro-display-habit-${h.id}">25:00</span>
+                        <button class="task-btn delete-btn" onclick="deleteHabit('${h.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="task-meta">
+                    ${h.time ? `<div class="task-deadline"><i class="far fa-clock"></i> ${h.time}</div>` : ''}
+                    <span class="task-priority" style="background-color:var(--secondary);">Rutinitas</span>
+                </div>
             `;
             
-            // Menampilkan jam rutinitas jika ada
-            if (h.time) {
-                const timeSpan = document.createElement('span');
-                timeSpan.style.display = 'block';
-                timeSpan.style.fontSize = '0.75rem';
-                timeSpan.style.color = 'var(--text-color)';
-                timeSpan.style.opacity = '0.7';
-                timeSpan.style.marginLeft = '30px';
-                timeSpan.innerHTML = `⏰ ${h.time}`;
-                checkLabel.appendChild(timeSpan);
-            }
-            
-            li.appendChild(checkLabel);
-            
-            // Container tombol aksi
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'task-actions';
-            
-            // Tombol Pomodoro
-            const btnPomodoro = document.createElement('button');
-            btnPomodoro.className = 'icon-btn pomodoro-btn';
-            btnPomodoro.innerHTML = '<i class="fas fa-stopwatch"></i>';
-            btnPomodoro.onclick = function() { togglePomodoro('habit-' + h.id, this); };
-            actionsDiv.appendChild(btnPomodoro);
-            
-            // Teks timer (tersembunyi secara default, ditampilkan saat aktif)
-            const displaySpan = document.createElement('span');
-            displaySpan.id = `pomodoro-display-habit-${h.id}`;
-            displaySpan.style.fontSize = '0.8rem';
-            displaySpan.style.marginRight = '8px';
-            displaySpan.style.fontWeight = 'bold';
-            displaySpan.innerText = '00:00';
-            actionsDiv.appendChild(displaySpan);
-            
-            const btnDelete = document.createElement('button');
-            btnDelete.className = 'icon-btn';
-            btnDelete.innerHTML = '<i class="fas fa-trash"></i>';
-            btnDelete.style.color = '#ff6b6b';
-            btnDelete.onclick = () => deleteHabit(h.id);
-            actionsDiv.appendChild(btnDelete);
-            
-            li.appendChild(actionsDiv);
             list.appendChild(li);
+            
+            // Perbaiki event listener checkbox untuk mengatasi masalah onchange string vs function
+            const cb = li.querySelector('.task-checkbox');
+            cb.onchange = () => toggleHabit(h.id);
+            
+            // Perbaiki event listener delete button
+            const delBtn = li.querySelector('.delete-btn');
+            delBtn.onclick = () => deleteHabit(h.id);
+            
+            // Perbaiki event listener pomodoro button
+            const pomBtn = li.querySelector('.pomodoro-btn');
+            pomBtn.onclick = function() { togglePomodoro('habit-' + h.id, this); };
             
             // Restore active pomodoro state for habit if any
             const savedEndTime = localStorage.getItem(`pomodoro_end_habit-${h.id}`);
@@ -978,7 +956,7 @@ if (window.Android && window.Android.getFcmToken) {
                 const endTime = parseInt(savedEndTime, 10);
                 if (endTime > now) {
                     setTimeout(() => {
-                        startPomodoroInterval('habit-' + h.id, btnPomodoro, parseInt(savedMins, 10) || 25, endTime);
+                        startPomodoroInterval('habit-' + h.id, pomBtn, parseInt(savedMins, 10) || 25, endTime);
                     }, 100);
                 } else {
                     localStorage.removeItem(`pomodoro_end_habit-${h.id}`);
