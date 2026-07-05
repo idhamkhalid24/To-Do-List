@@ -760,6 +760,11 @@ if (window.Android && window.Android.getFcmToken) {
             delete activePomodoros[taskId];
             btnElement.classList.remove('active');
             display.innerText = "00:00";
+            
+            // Batalkan alarm di background
+            if (window.Android && window.Android.cancelPomodoroAlarm) {
+                window.Android.cancelPomodoroAlarm(taskId);
+            }
         } else {
             // Start
             const inputMins = prompt("Berapa menit kamu ingin fokus pada tugas ini?", "25");
@@ -773,6 +778,13 @@ if (window.Android && window.Android.getFcmToken) {
             const initialM = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             const initialS = (timeLeft % 60).toString().padStart(2, '0');
             display.innerText = `${initialM}:${initialS}`;
+            
+            // Daftarkan alarm ke background Android
+            const taskObj = tasks.find(t => String(t.id) === String(taskId));
+            const taskTitle = taskObj ? taskObj.title : "Tugas Fokus";
+            if (window.Android && window.Android.schedulePomodoroAlarm) {
+                window.Android.schedulePomodoroAlarm(minutes, taskId, taskTitle);
+            }
             
             activePomodoros[taskId] = setInterval(() => {
                 timeLeft--;
