@@ -957,16 +957,17 @@ if (window.Android && window.Android.getFcmToken) {
         }
         habits.forEach(h => {
             const li = document.createElement('li');
-            li.className = `task-item ${h.completed ? 'completed' : ''}`;
+            // FIX: gunakan 'habit-item' agar CSS .habit-item.completed bekerja
+            li.className = `habit-item ${h.completed ? 'completed' : ''}`;
             
             li.innerHTML = `
                 <div class="task-header">
-                    <input type="checkbox" class="task-checkbox" ${h.completed ? 'checked' : ''} onchange="toggleHabit('${h.id}')">
+                    <input type="checkbox" class="task-checkbox" ${h.completed ? 'checked' : ''}>
                     <div class="task-title${h.completed ? ' completed' : ''}">${h.name}</div>
                     <div class="task-actions">
-                        <button class="pomodoro-btn" onclick="togglePomodoro('habit-${h.id}', this)" title="Mulai Fokus (Pomodoro)"><i class="fas fa-stopwatch"></i></button>
+                        <button class="pomodoro-btn" title="Mulai Fokus (Pomodoro)"><i class="fas fa-stopwatch"></i></button>
                         <span class="pomodoro-timer-display" id="pomodoro-display-habit-${h.id}">25:00</span>
-                        <button class="task-btn delete-btn" onclick="deleteHabit('${h.id}')"><i class="fas fa-trash"></i></button>
+                        <button class="task-btn delete-btn"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
                 <div class="task-meta">
@@ -977,17 +978,21 @@ if (window.Android && window.Android.getFcmToken) {
             
             list.appendChild(li);
             
-            // Perbaiki event listener checkbox untuk mengatasi masalah onchange string vs function
+            // FIX: pasang semua event listener via JS, bukan inline HTML (lebih andal di Android WebView)
             const cb = li.querySelector('.task-checkbox');
-            cb.onchange = () => toggleHabit(h.id);
+            cb.addEventListener('change', () => toggleHabit(h.id));
+            // Juga handle tap langsung di label area untuk Android
+            cb.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.checked = !this.checked;
+                toggleHabit(h.id);
+            });
             
-            // Perbaiki event listener delete button
             const delBtn = li.querySelector('.delete-btn');
-            delBtn.onclick = () => deleteHabit(h.id);
+            delBtn.addEventListener('click', () => deleteHabit(h.id));
             
-            // Perbaiki event listener pomodoro button
             const pomBtn = li.querySelector('.pomodoro-btn');
-            pomBtn.onclick = function() { togglePomodoro('habit-' + h.id, this); };
+            pomBtn.addEventListener('click', function() { togglePomodoro('habit-' + h.id, this); });
             
             // Restore active pomodoro state for habit if any
             const savedEndTime = localStorage.getItem(`pomodoro_end_habit-${h.id}`);
@@ -1044,6 +1049,19 @@ if (window.Android && window.Android.getFcmToken) {
         // Initialize Habits
         checkHabitReset();
         renderHabits();
+
+        // Fix: di Android WebView, input kadang tidak bisa diketik karena focus tidak ter-trigger.
+        // Paksa focus saat user men-tap input.
+        const habitInput = document.getElementById('new-habit-input');
+        habitInput.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            this.focus();
+        }, { passive: true });
+        // Juga pastikan tidak ada elemen lain yang mencuri tap event
+        habitInput.addEventListener('click', function() {
+            this.focus();
+        });
+
         document.getElementById('add-habit-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const input = document.getElementById('new-habit-input');

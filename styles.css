@@ -286,9 +286,29 @@
         .habit-item { background-color: white; border: var(--border); border-radius: var(--radius); padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; box-shadow: var(--shadow); }
         .dark-mode .habit-item { background-color: #2A2A2A; }
         .habit-item.completed { opacity: 0.6; background-color: var(--light); }
-        .add-habit-form { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
-        .add-habit-input { flex: 1; padding: 0.4rem; border: var(--border); border-radius: var(--radius); font-size: var(--font-sm); font-family: inherit; }
+        .add-habit-form { display: flex; gap: 0.4rem; margin-top: 0.5rem; align-items: center; }
+        .add-habit-input {
+            flex: 1;
+            padding: 0.5rem 0.6rem;
+            border: var(--border);
+            border-radius: var(--radius);
+            font-size: var(--font-sm);
+            font-family: inherit;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            min-height: 38px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            cursor: text;
+            box-sizing: border-box;
+        }
+        .dark-mode .add-habit-input { background-color: #2A2A2A; color: #f0f0f0; border-color: #444; }
+        .add-habit-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 99,102,241), 0.15); }
         
+
         .pomodoro-btn { background: none; border: none; cursor: pointer; color: var(--dark); font-size: 1.1rem; padding: 0 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease; }
         .pomodoro-btn:active { transform: scale(0.9); }
         .pomodoro-btn.active { color: #e63946; animation: pulse 1.5s infinite; }
