@@ -283,9 +283,20 @@
         .habit-section { margin-bottom: 1rem; }
         .habit-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
         .habit-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.5rem; }
-        .habit-item { background-color: white; border: var(--border); border-radius: var(--radius); padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; box-shadow: var(--shadow); }
+        .habit-item {
+            background-color: white;
+            border: var(--border);
+            border-radius: var(--radius);
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            flex-direction: column;   /* stack task-header & task-meta secara vertikal */
+            gap: 0.25rem;
+            box-shadow: var(--shadow);
+        }
         .dark-mode .habit-item { background-color: #2A2A2A; }
         .habit-item.completed { opacity: 0.6; background-color: var(--light); }
+        .habit-item .task-header { width: 100%; }
+        .habit-item .task-meta  { padding-left: 1.6rem; margin-top: 0.1rem; }
         .add-habit-form { display: flex; gap: 0.4rem; margin-top: 0.5rem; align-items: center; }
         .add-habit-input {
             flex: 1;
